@@ -1,0 +1,6 @@
+Full Name: Rushikesh Kapadnis
+Email: rushikapadnis09@gmail.com
+Phone: +91-8805865413
+GitHub: https://github.com/rushikapadnis
+
+Most challenging part: Debugging FastAPI OpenAPI crashes due to schema mismatches and import issues during deployment on Render.
