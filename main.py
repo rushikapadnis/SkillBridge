@@ -9,7 +9,10 @@ import os, uuid
 
 app = FastAPI()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-Base.metadata.create_all(bind=engine)
+
+@app.on_event("startup")
+def on_startup():
+    Base.metadata.create_all(bind=engine)
 
 
 def get_db():
@@ -36,7 +39,7 @@ def signup(data: Signup, db=Depends(get_db)):
 def login(data: Login, db=Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user or not verify_password(data.password, user.hashed_password):
-        raise HTTPException(401)
+        raise HTTPException(status_code=401, detail="Invalid credentials")
     return {"token": create_token({"user_id": user.id, "role": user.role}, 24)}
 
 # ---------- BATCH ----------
@@ -54,4 +57,8 @@ def invite(id:int, db=Depends(get_db), user=Depends(require_role(["trainer"]))):
     db.add(inv)
     db.commit()
     return {"invite_token": token}
+
+@app.get("/")
+def root():
+    return {"message": "SkillBridge API is live "}
 
