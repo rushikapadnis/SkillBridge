@@ -1,10 +1,15 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime
 import uuid, random
 
 from database import Base, engine, SessionLocal
-from models import *
+from models import (
+    User, Batch, BatchStudent, BatchInvite,
+    Session as SessionModel,
+    Attendance, BatchTrainer, Institution
+)
+
 from schemas import *
 from auth import create_token
 from dependencies import require_role
@@ -16,10 +21,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # ---------------- DB SETUP ----------------
 @app.on_event("startup")
 def startup():
-    try:
-        Base.metadata.create_all(bind=engine)
-    except Exception as e:
-        print("Startup DB error:", e)
+    Base.metadata.create_all(bind=engine)
 
 
 def get_db():
@@ -30,9 +32,11 @@ def get_db():
         db.close()
 
 
-def hash_password(p): return pwd_context.hash(p)
+def hash_password(p):
+    return pwd_context.hash(p)
 
-def verify_password(p, h): return pwd_context.verify(p, h)
+def verify_password(p, h):
+    return pwd_context.verify(p, h)
 
 # ---------------- AUTH ----------------
 @app.post("/auth/signup")
@@ -58,7 +62,11 @@ def login(data: Login, db: Session = Depends(get_db)):
 
 # ---------------- BATCH ----------------
 @app.post("/batches")
-def create_batch(data: BatchCreate, db: Session = Depends(get_db), user=Depends(require_role(["trainer", "institution"]))):
+def create_batch(
+    data: BatchCreate,
+    db: Session = Depends(get_db),
+    user=Depends(require_role(["trainer", "institution"]))
+):
     batch = Batch(name=data.name, institution_id=data.institution_id)
     db.add(batch)
     db.commit()
@@ -66,7 +74,11 @@ def create_batch(data: BatchCreate, db: Session = Depends(get_db), user=Depends(
     return batch
 
 @app.post("/batches/{batch_id}/invite")
-def invite(batch_id: int, db: Session = Depends(get_db), user=Depends(require_role(["trainer"]))):
+def invite(
+    batch_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_role(["trainer"]))
+):
     token = str(uuid.uuid4())
     inv = BatchInvite(batch_id=batch_id, token=token, used=False, created_by=user["user_id"])
     db.add(inv)
@@ -74,10 +86,18 @@ def invite(batch_id: int, db: Session = Depends(get_db), user=Depends(require_ro
     return {"invite_token": token}
 
 @app.post("/batches/join")
-def join_batch(data: JoinBatch, db: Session = Depends(get_db), user=Depends(require_role(["student"]))):
-    invite = db.query(BatchInvite).filter(BatchInvite.token == data.token, BatchInvite.used == False).first()
-    if not invite or invite.expires_at and invite.expires_at < datetime.utcnow():
-        raise HTTPException(400, "Invalid or expired invite")
+def join_batch(
+    data: JoinBatch,
+    db: Session = Depends(get_db),
+    user=Depends(require_role(["student"]))
+):
+    invite = db.query(BatchInvite).filter(
+        BatchInvite.token == data.token,
+        BatchInvite.used == False
+    ).first()
+
+    if not invite:
+        raise HTTPException(400, "Invalid invite")
 
     mapping = BatchStudent(batch_id=invite.batch_id, student_id=user["user_id"])
     invite.used = True
@@ -88,7 +108,11 @@ def join_batch(data: JoinBatch, db: Session = Depends(get_db), user=Depends(requ
 
 # ---------------- SESSIONS ----------------
 @app.post("/sessions")
-def create_session(data: SessionCreate, db: Session = Depends(get_db), user=Depends(require_role(["trainer"]))):
+def create_session(
+    data: SessionCreate,
+    db: Session = Depends(get_db),
+    user=Depends(require_role(["trainer"]))
+):
     session = SessionModel(
         batch_id=data.batch_id,
         trainer_id=user["user_id"],
@@ -99,16 +123,26 @@ def create_session(data: SessionCreate, db: Session = Depends(get_db), user=Depe
     )
     db.add(session)
     db.commit()
+    db.refresh(session)
     return session
 
 @app.get("/sessions/{session_id}/attendance")
-def get_attendance(session_id: int, db: Session = Depends(get_db), user=Depends(require_role(["trainer"]))):
-    records = db.query(Attendance).filter(Attendance.session_id == session_id).all()
-    return records
+def get_attendance(
+    session_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_role(["trainer"]))
+):
+    return db.query(Attendance).filter(
+        Attendance.session_id == session_id
+    ).all()
 
 # ---------------- ATTENDANCE ----------------
 @app.post("/attendance/mark")
-def mark_attendance(data: AttendanceMark, db: Session = Depends(get_db), user=Depends(require_role(["student"]))):
+def mark_attendance(
+    data: AttendanceMark,
+    db: Session = Depends(get_db),
+    user=Depends(require_role(["student"]))
+):
     session = db.query(SessionModel).filter(SessionModel.id == data.session_id).first()
     if not session:
         raise HTTPException(404, "Session not found")
@@ -119,23 +153,41 @@ def mark_attendance(data: AttendanceMark, db: Session = Depends(get_db), user=De
         status=data.status,
         marked_at=datetime.utcnow()
     )
+
     db.add(record)
     db.commit()
     return {"message": "Attendance marked"}
 
-# ---------------- SUMMARY APIs ----------------
+# ---------------- SUMMARY ----------------
 @app.get("/batches/{batch_id}/summary")
-def batch_summary(batch_id: int, db: Session = Depends(get_db), user=Depends(require_role(["institution"]))):
-    sessions = db.query(SessionModel).filter(SessionModel.batch_id == batch_id).all()
-    return {"total_sessions": len(sessions)}
+def batch_summary(
+    batch_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_role(["institution"]))
+):
+    sessions = db.query(SessionModel).filter(
+        SessionModel.batch_id == batch_id
+    ).count()
+
+    return {"total_sessions": sessions}
 
 @app.get("/institutions/{inst_id}/summary")
-def institution_summary(inst_id: int, db: Session = Depends(get_db), user=Depends(require_role(["programme_manager"]))):
-    batches = db.query(Batch).filter(Batch.institution_id == inst_id).all()
-    return {"total_batches": len(batches)}
+def institution_summary(
+    inst_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(require_role(["programme_manager"]))
+):
+    batches = db.query(Batch).filter(
+        Batch.institution_id == inst_id
+    ).count()
+
+    return {"total_batches": batches}
 
 @app.get("/programme/summary")
-def programme_summary(db: Session = Depends(get_db), user=Depends(require_role(["programme_manager"]))):
+def programme_summary(
+    db: Session = Depends(get_db),
+    user=Depends(require_role(["programme_manager"]))
+):
     return {
         "total_users": db.query(User).count(),
         "total_batches": db.query(Batch).count(),
@@ -143,7 +195,10 @@ def programme_summary(db: Session = Depends(get_db), user=Depends(require_role([
     }
 
 @app.get("/monitoring/attendance")
-def monitoring(db: Session = Depends(get_db), user=Depends(require_role(["monitoring_officer"]))):
+def monitoring(
+    db: Session = Depends(get_db),
+    user=Depends(require_role(["monitoring_officer"]))
+):
     return db.query(Attendance).all()
 
 # ---------------- SEED SCRIPT ----------------
@@ -160,12 +215,22 @@ def seed():
     students = []
 
     for i in range(4):
-        t = User(name=f"Trainer{i}", email=f"t{i}@x.com", hashed_password=hash_password("123"), role="trainer", institution_id=inst1.id)
-        trainers.append(t)
+        trainers.append(User(
+            name=f"Trainer{i}",
+            email=f"t{i}@x.com",
+            hashed_password=hash_password("123"),
+            role="trainer",
+            institution_id=inst1.id
+        ))
 
     for i in range(15):
-        s = User(name=f"Student{i}", email=f"s{i}@x.com", hashed_password=hash_password("123"), role="student", institution_id=inst1.id)
-        students.append(s)
+        students.append(User(
+            name=f"Student{i}",
+            email=f"s{i}@x.com",
+            hashed_password=hash_password("123"),
+            role="student",
+            institution_id=inst1.id
+        ))
 
     db.add_all(trainers + students)
     db.commit()
@@ -199,10 +264,16 @@ def seed():
 
     for s in sessions:
         for st in students[:5]:
-            db.add(Attendance(session_id=s.id, student_id=st.id, status=random.choice(["present", "absent", "late"]), marked_at=datetime.utcnow()))
+            db.add(Attendance(
+                session_id=s.id,
+                student_id=st.id,
+                status=random.choice(["present", "absent", "late"]),
+                marked_at=datetime.utcnow()
+            ))
 
     db.commit()
     db.close()
+
 
 if __name__ == "__main__":
     seed()
