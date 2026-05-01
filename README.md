@@ -19,7 +19,6 @@ Institution
 Programme Manager
 Monitoring Officer
 
-# 📊 Attendance Management System API
 
 ## 🚀 Live API
 
@@ -44,7 +43,7 @@ https://skillbridge-backend-4ali.onrender.com/
 
 ---
 
-# ⚙️ Local Setup Instructions
+#  Local Setup Instructions
 
 ## 1. Clone Repository
 
@@ -71,7 +70,7 @@ pip install -r requirements.txt
 Create `.env` file:
 
 ```env
-DATABASE_URL=your_neon_connection_string
+DATABASE_URL= " " # it should be private so i  not past here 
 SECRET_KEY=supersecret
 ALGORITHM=HS256
 MONITORING_API_KEY=myapikey
@@ -103,7 +102,7 @@ http://127.0.0.1:8000/docs
 
 ---
 
-# 🔐 Authentication Flow
+#  Authentication Flow
 
 ## Step 1: Login
 
@@ -113,7 +112,7 @@ curl -X POST http://127.0.0.1:8000/auth/login \
 -d '{"email":"student@test.com","password":"123"}'
 ```
 
-👉 Response:
+ Response:
 
 ```
 {"token":"JWT_TOKEN"}
@@ -123,7 +122,7 @@ curl -X POST http://127.0.0.1:8000/auth/login \
 
 # 📡 API Endpoints (Sample cURL)
 
-## 🧑‍🎓 Signup
+##  Signup
 
 ```bash
 curl -X POST http://127.0.0.1:8000/auth/signup \
@@ -133,7 +132,7 @@ curl -X POST http://127.0.0.1:8000/auth/signup \
 
 ---
 
-## 📦 Create Batch (Trainer)
+##  Create Batch (Trainer)
 
 ```bash
 curl -X POST http://127.0.0.1:8000/batches \
@@ -144,7 +143,7 @@ curl -X POST http://127.0.0.1:8000/batches \
 
 ---
 
-## 🔗 Generate Invite
+##  Generate Invite
 
 ```bash
 curl -X POST http://127.0.0.1:8000/batches/1/invite \
@@ -153,7 +152,7 @@ curl -X POST http://127.0.0.1:8000/batches/1/invite \
 
 ---
 
-## 🎯 Join Batch (Student)
+##  Join Batch (Student)
 
 ```bash
 curl -X POST http://127.0.0.1:8000/batches/join \
@@ -163,7 +162,7 @@ curl -X POST http://127.0.0.1:8000/batches/join \
 
 ---
 
-## 📅 Create Session
+##  Create Session
 
 ```bash
 curl -X POST http://127.0.0.1:8000/sessions \
@@ -174,7 +173,7 @@ curl -X POST http://127.0.0.1:8000/sessions \
 
 ---
 
-## ✅ Mark Attendance
+##  Mark Attendance
 
 ```bash
 curl -X POST http://127.0.0.1:8000/attendance/mark \
@@ -185,7 +184,7 @@ curl -X POST http://127.0.0.1:8000/attendance/mark \
 
 ---
 
-## 📊 Session Attendance
+##  Session Attendance
 
 ```bash
 curl -X GET http://127.0.0.1:8000/sessions/1/attendance \
@@ -194,7 +193,7 @@ curl -X GET http://127.0.0.1:8000/sessions/1/attendance \
 
 ---
 
-# 🔐 Monitoring Officer Token (Special Flow)
+#  Monitoring Officer Token (Special Flow)
 
 ## Step 1: Login (normal JWT)
 
@@ -217,7 +216,7 @@ curl -X GET http://127.0.0.1:8000/monitoring/attendance \
 
 ---
 
-# 🧠 Schema Decisions
+#  Schema Decisions
 
 ### 1. `batch_trainers`
 
@@ -240,7 +239,7 @@ curl -X GET http://127.0.0.1:8000/monitoring/attendance \
 
 ---
 
-# ✅ What’s Fully Working
+#  What’s Fully Working
 
 * Authentication (Signup/Login)
 * Role-Based Access Control (RBAC)
@@ -252,7 +251,7 @@ curl -X GET http://127.0.0.1:8000/monitoring/attendance \
 
 ---
 
-# ⚠️ Partially Implemented
+#  Partially Implemented
 
 * Advanced validation (422 responses can be improved)
 * Summary endpoints (basic version implemented)
@@ -260,7 +259,7 @@ curl -X GET http://127.0.0.1:8000/monitoring/attendance \
 
 ---
 
-# ❌ Skipped / Not Fully Implemented
+#  Skipped / Not Fully Implemented
 
 * Full test coverage (only basic tests included)
 * Pagination for large datasets
@@ -268,7 +267,7 @@ curl -X GET http://127.0.0.1:8000/monitoring/attendance \
 
 ---
 
-# 💡 What I’d Do With More Time
+#  What I’d Do With More Time
 
 I would implement:
 
