@@ -16,7 +16,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # ---------------- DB SETUP ----------------
 @app.on_event("startup")
 def startup():
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print("Startup DB error:", e)
 
 
 def get_db():
