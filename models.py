@@ -42,3 +42,10 @@ class Attendance(Base):
     session_id = Column(Integer)
     student_id = Column(Integer)
     status = Column(String)
+    
+class BatchTrainer(Base):
+    __tablename__ = "batch_trainers"
+
+    id = Column(Integer, primary_key=True)
+    batch_id = Column(Integer)
+    trainer_id = Column(Integer)

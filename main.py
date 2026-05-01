@@ -3,12 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 import uuid, random
 
-from database import Base, engine, SessionLocal
-from models import (
-    User, Batch, BatchStudent, BatchInvite,
-    Session as SessionModel,
-    Attendance, BatchTrainer, Institution
-)
+from models import User, Batch, BatchStudent, BatchInvite, Session, Attendance, Institution
 
 from schemas import *
 from auth import create_token
