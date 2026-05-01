@@ -15,8 +15,7 @@ from models import (
     BatchInvite,
     Session as SessionModel,
     Attendance,
-    BatchTrainer,
-    Institution
+    BatchTrainer
 )
 
 from schemas import *
